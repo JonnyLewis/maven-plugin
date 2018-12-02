@@ -13,6 +13,8 @@
 		<maven.version>3.6.0</maven.version>
 		<java.version>1.8</java.version>
 		<apache.httpclient.version>4.5.6</apache.httpclient.version>
+        <javax.json.version>1.1.4</javax.json.version>
+        <jackson.yaml.version>2.9.7</jackson.yaml.version>
 	</properties>
 	<dependencies>
         <!-- Maven Specific -->
@@ -44,10 +46,17 @@
 		<dependency>
 			<groupId>org.glassfish</groupId>
 			<artifactId>javax.json</artifactId>
-			<version>1.1.4</version>
+			<version>${javax.json.version}</version>
+		</dependency>
+		<!-- https://mvnrepository.com/artifact/org.yaml/snakeyaml -->
+		<dependency>
+			<groupId>org.yaml</groupId>
+			<artifactId>snakeyaml</artifactId>
+			<version>1.23</version>
 		</dependency>
 
-	</dependencies>
+
+    </dependencies>
 	<build>
 		<pluginManagement>
 			<plugins>

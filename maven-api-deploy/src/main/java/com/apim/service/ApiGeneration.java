@@ -12,10 +12,7 @@ import org.apache.http.impl.client.HttpClients;
 import org.apache.http.message.BasicNameValuePair;
 import org.apache.http.util.EntityUtils;
 
-import javax.json.Json;
-import javax.json.JsonObject;
-import javax.json.JsonObjectBuilder;
-import javax.json.JsonReader;
+import javax.json.*;
 import java.io.BufferedReader;
 import java.io.InputStream;
 import java.io.InputStreamReader;
@@ -129,10 +126,23 @@ public class ApiGeneration {
             httpPost.addHeader("Authorization", "Bearer " + accessToken);
             httpPost.addHeader("Content-Type", "application/json");
 
-            // Request payload.
+            // endpoint_type
             JsonObjectBuilder epType = Json.createObjectBuilder().add("endpoint_type", "http");
             epType.add("production_endpoints", Json.createObjectBuilder().add("url", PluginPropertyValues.PRODUCTION).add("config", ""));
             epType.add("sandbox_endpoints", Json.createObjectBuilder().add("url", PluginPropertyValues.SANDBOX).add("config", ""));
+
+            // transports
+            JsonArrayBuilder transportArray = Json.createArrayBuilder();
+            PluginPropertyValues.TRANSPORTS.forEach((t) -> {
+                transportArray.add(t);
+            });
+
+            // tiers
+            JsonArrayBuilder tiersArray = Json.createArrayBuilder();
+            PluginPropertyValues.TIERS.forEach((t) -> {
+                tiersArray.add(t);
+            });
+
             String request = Json.createObjectBuilder()
                     .add("name", PluginPropertyValues.APINAME)
                     .add("description", PluginPropertyValues.DESCRIPTION)
@@ -144,13 +154,13 @@ public class ApiGeneration {
                     .add("responseCaching", "Disabled")
                     .add("isDefaultVersion", false)
                     .add("type", PluginPropertyValues.TYPE)
-                    .add("transport", PluginPropertyValues.TRANSPORTS.toString())
-                    .add("tiers", PluginPropertyValues.TIERS.toString())
+                    .add("transport", transportArray.build())
+                    .add("tiers", tiersArray.build())
                     .add("visibility", PluginPropertyValues.VISIBILITY)
-                    .add("endpointConfig", epType)
+                    .add("endpointConfig", epType.build().toString())
                     .add("gatewayEnvironments", PluginPropertyValues.GATEWAY)
                     .build().toString();
-            System.out.println("###########Response###########\n" + request);
+            System.out.println("###########Request###########\n" + request);
             httpPost.setEntity(new StringEntity(request));
 
             // Send request.
@@ -185,7 +195,8 @@ public class ApiGeneration {
         try {
             InputStream inputStream = loader.getResourceAsStream(PluginPropertyValues.APIPATH);
             bufferedReader = new BufferedReader(new InputStreamReader(inputStream));
-            String lines = bufferedReader.lines().collect(Collectors.joining("\n"));
+            String lines = bufferedReader.lines().collect(Collectors.joining());
+
             return lines;
         } catch (Exception e) {
             e.printStackTrace();
