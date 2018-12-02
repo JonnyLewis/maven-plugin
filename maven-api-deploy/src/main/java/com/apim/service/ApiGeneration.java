@@ -14,22 +14,40 @@ import org.apache.http.util.EntityUtils;
 
 import javax.json.Json;
 import javax.json.JsonObject;
+import javax.json.JsonObjectBuilder;
 import javax.json.JsonReader;
+import java.io.BufferedReader;
+import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.io.StringReader;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 public class ApiGeneration {
 
-    public static void deploy() throws Exception {
-        JsonObject jsonObject = registerUser();
-        getAccessToken(jsonObject.getString("clientId"), jsonObject.getString("clientSecret"));
+    public static void main(String[] args) throws Exception {
+        uploadApi("", null);
     }
 
+    public static void deploy(ClassLoader loader) throws Exception {
+        JsonObject clientCredentials = registerUser();
+        JsonObject accessToken = getAccessToken(clientCredentials.getString("clientId"), clientCredentials.getString("clientSecret"));
+        uploadApi(accessToken.getString("access_token"), loader);
+    }
+
+    /**
+     * Get clientId & clientSecret.
+     *
+     * @return
+     * @throws Exception
+     */
     public static JsonObject registerUser() throws Exception {
         String url = "https://" + PluginPropertyValues.HOST + ":" + PluginPropertyValues.ADMINPORT + "/client-registration/v0.14/register";
         try (CloseableHttpClient client = HttpClients.createDefault()) {
             HttpPost httpPost = new HttpPost(url);
+
+            // Request payload.
             String request = Json.createObjectBuilder()
                     .add("callbackUrl", "www.google.lk")
                     .add("clientName", "rest_api_publisher")
@@ -43,7 +61,10 @@ public class ApiGeneration {
             httpPost.addHeader(new BasicScheme().authenticate(creds, httpPost, null));
             httpPost.addHeader("Content-Type", "application/json");
 
+            // Send request.
             HttpResponse response = client.execute(httpPost);
+
+            // Parse response to JsonObject.
             JsonObject jsonObject = parseJson(EntityUtils.toString(response.getEntity()));
             return jsonObject;
 
@@ -53,12 +74,19 @@ public class ApiGeneration {
         return null;
     }
 
+    /**
+     * Get Access Token.
+     *
+     * @param clientId
+     * @param clientSecret
+     * @return
+     */
     public static JsonObject getAccessToken(String clientId, String clientSecret) {
         String url = "https://" + PluginPropertyValues.HOST + ":" + PluginPropertyValues.GATEWAYPORT + "/token";
         try (CloseableHttpClient client = HttpClients.createDefault()) {
             HttpPost httpPost = new HttpPost(url);
 
-            // Add headers.
+            // Add parameters.
             List<NameValuePair> params = new ArrayList<>();
             params.add(new BasicNameValuePair("grant_type", "password"));
             params.add(new BasicNameValuePair("username", PluginPropertyValues.USERNAME));
@@ -68,12 +96,14 @@ public class ApiGeneration {
 
 
             // Add headers
-            //httpPost.addHeader("Authorization", "Basic OEpmX3gxMkQwb2FlbG93TDQ5RlNTZlhqV2VzYTpNRnhuWDhxQnA2NG9aTHFscDE5SEluSjVNTXdh");
             UsernamePasswordCredentials credentials = new UsernamePasswordCredentials(clientId, clientSecret);
             httpPost.addHeader(new BasicScheme().authenticate(credentials, httpPost, null));
+
+            // Send request.
             HttpResponse response = client.execute(httpPost);
+
+            // Parse response to JsonObject.
             String result = EntityUtils.toString(response.getEntity());
-            System.out.println(result);
             JsonObject jsonObject = parseJson(result);
             return jsonObject;
 
@@ -83,8 +113,85 @@ public class ApiGeneration {
         return null;
     }
 
+    /**
+     * Upload API.
+     *
+     * @param accessToken
+     * @param loader
+     * @throws Exception
+     */
+    public static void uploadApi(String accessToken, ClassLoader loader) throws Exception {
+        String url = "https://" + PluginPropertyValues.HOST + ":" + PluginPropertyValues.ADMINPORT + "/api/am/publisher/v0.14/apis";
+        try (CloseableHttpClient client = HttpClients.createDefault();) {
+            HttpPost httpPost = new HttpPost(url);
+
+            // Add header.
+            httpPost.addHeader("Authorization", "Bearer " + accessToken);
+            httpPost.addHeader("Content-Type", "application/json");
+
+            // Request payload.
+            JsonObjectBuilder epType = Json.createObjectBuilder().add("endpoint_type", "http");
+            epType.add("production_endpoints", Json.createObjectBuilder().add("url", PluginPropertyValues.PRODUCTION).add("config", ""));
+            epType.add("sandbox_endpoints", Json.createObjectBuilder().add("url", PluginPropertyValues.SANDBOX).add("config", ""));
+            String request = Json.createObjectBuilder()
+                    .add("name", PluginPropertyValues.APINAME)
+                    .add("description", PluginPropertyValues.DESCRIPTION)
+                    .add("context", PluginPropertyValues.CONTEXT)
+                    .add("version", PluginPropertyValues.VERSION)
+                    .add("provider", PluginPropertyValues.USERNAME)
+                    .add("apiDefinition", apiDefinition(loader))
+                    .add("status", "CREATED")
+                    .add("responseCaching", "Disabled")
+                    .add("isDefaultVersion", false)
+                    .add("type", PluginPropertyValues.TYPE)
+                    .add("transport", PluginPropertyValues.TRANSPORTS.toString())
+                    .add("tiers", PluginPropertyValues.TIERS.toString())
+                    .add("visibility", PluginPropertyValues.VISIBILITY)
+                    .add("endpointConfig", epType)
+                    .add("gatewayEnvironments", PluginPropertyValues.GATEWAY)
+                    .build().toString();
+            System.out.println("###########Response###########\n" + request);
+            httpPost.setEntity(new StringEntity(request));
+
+            // Send request.
+            HttpResponse response = client.execute(httpPost);
+            System.out.println("###########Response###########\n" + EntityUtils.toString(response.getEntity()));
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    /**
+     * Parse Json string
+     *
+     * @param json
+     * @return
+     * @throws Exception
+     */
     public static JsonObject parseJson(String json) throws Exception {
         JsonReader reader = Json.createReader(new StringReader(json));
         return reader.readObject();
+    }
+
+    /**
+     * Create API Definition reading classpath resource.
+     *
+     * @param loader
+     * @return
+     * @throws Exception
+     */
+    public static String apiDefinition(ClassLoader loader) throws Exception {
+        BufferedReader bufferedReader = null;
+        try {
+            InputStream inputStream = loader.getResourceAsStream(PluginPropertyValues.APIPATH);
+            bufferedReader = new BufferedReader(new InputStreamReader(inputStream));
+            String lines = bufferedReader.lines().collect(Collectors.joining("\n"));
+            return lines;
+        } catch (Exception e) {
+            e.printStackTrace();
+        } finally {
+            bufferedReader.close();
+        }
+        return null;
     }
 }

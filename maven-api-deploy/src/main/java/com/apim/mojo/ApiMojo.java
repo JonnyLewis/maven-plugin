@@ -1,14 +1,25 @@
 package com.apim.mojo;
 
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.net.URL;
+import java.net.URLClassLoader;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import com.apim.service.ApiGeneration;
 import com.apim.service.PluginPropertyValues;
 import org.apache.maven.plugin.AbstractMojo;
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugin.MojoFailureException;
+import org.apache.maven.plugins.annotations.Component;
 import org.apache.maven.plugins.annotations.Mojo;
 import org.apache.maven.plugins.annotations.Parameter;
+import org.apache.maven.plugins.annotations.ResolutionScope;
+import org.apache.maven.project.MavenProject;
 
 @Mojo(name = "deploy")
 public class ApiMojo extends AbstractMojo {
@@ -64,6 +75,9 @@ public class ApiMojo extends AbstractMojo {
     @Parameter(required = true)
     private String gateway;
 
+    @Component
+    MavenProject mavenProject;
+
     public void execute() throws MojoExecutionException, MojoFailureException {
         PluginPropertyValues.HOST = getHost();
         PluginPropertyValues.ADMINPORT = getAdmiport();
@@ -84,10 +98,33 @@ public class ApiMojo extends AbstractMojo {
         PluginPropertyValues.GATEWAY = getGateway();
 
         try {
-            ApiGeneration.deploy();
+            ClassLoader loader = makeClassLoader(mavenProject.getCompileClasspathElements());
+            ApiGeneration.deploy(loader);
         } catch (Exception e) {
             e.printStackTrace();
+            getLog().error(e.getMessage());
         }
+    }
+
+    /**
+     * Make Classloader.
+     *
+     * @param paths
+     * @return
+     */
+    private ClassLoader makeClassLoader(List<String> paths) {
+        List<URL> pathUrls = new ArrayList<>();
+        paths.forEach((path) -> {
+            try {
+                pathUrls.add(new File(path).toURI().toURL());
+            } catch (Exception e) {
+                getLog().error(e.getMessage());
+            }
+
+        });
+        URL[] urlsForClassLoader = pathUrls.toArray(new URL[pathUrls.size()]);
+        URLClassLoader urlClassLoader = new URLClassLoader(urlsForClassLoader);
+        return urlClassLoader;
     }
 
     public String getHost() {
