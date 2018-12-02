@@ -1,17 +1,25 @@
 package com.apim.mojo;
 
-
 import java.util.List;
 
+import com.apim.service.PluginPropertyValues;
 import org.apache.maven.plugin.AbstractMojo;
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugin.MojoFailureException;
 import org.apache.maven.plugins.annotations.Mojo;
 import org.apache.maven.plugins.annotations.Parameter;
 
-
 @Mojo(name = "deploy")
 public class ApiMojo extends AbstractMojo {
+
+    @Parameter(required = true)
+    private String host;
+
+    @Parameter(required = true)
+    private int admiport;
+
+    @Parameter(required = true)
+    private int gwport;
 
     @Parameter(required = true)
     private String username;
@@ -55,9 +63,48 @@ public class ApiMojo extends AbstractMojo {
     @Parameter(required = true)
     private String gateway;
 
-
     public void execute() throws MojoExecutionException, MojoFailureException {
+        PluginPropertyValues.HOST = getHost();
+        PluginPropertyValues.ADMIN_PORT = getAdmiport();
+        PluginPropertyValues.GATEWAY_PORT=getGwport();
+        PluginPropertyValues.USERNAME = getUsername();
+        PluginPropertyValues.PASSWORD = getPassword();
+        PluginPropertyValues.APINAME = getApiname();
+        PluginPropertyValues.DESCRIPTION = getDescription();
+        PluginPropertyValues.CONTEXT = getContext();
+        PluginPropertyValues.VERSION = getVersion();
+        PluginPropertyValues.APIPATH = getApipath();
+        PluginPropertyValues.TYPE = getType();
+        PluginPropertyValues.TIERS = getTiers();
+        PluginPropertyValues.VISIBILITY = getVisibility();
+        PluginPropertyValues.PRODUCTION = getProduction();
+        PluginPropertyValues.SANDBOX = getSandbox();
+        PluginPropertyValues.GATEWAY = getGateway();
 
+    }
+
+    public String getHost() {
+        return host;
+    }
+
+    public void setHost(String host) {
+        this.host = host;
+    }
+
+    public int getAdmiport() {
+        return admiport;
+    }
+
+    public void setAdmiport(int admiport) {
+        this.admiport = admiport;
+    }
+
+    public int getGwport() {
+        return gwport;
+    }
+
+    public void setGwport(int gwport) {
+        this.gwport = gwport;
     }
 
     public String getUsername() {
