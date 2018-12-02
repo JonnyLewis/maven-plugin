@@ -4,11 +4,11 @@ import java.util.List;
 
 public class PluginPropertyValues {
 
-    public static String HOST;
-    public static int ADMIN_PORT;
-    public static int GATEWAY_PORT;
-    public static String USERNAME;
-    public static String PASSWORD;
+    public static String HOST = "localhost";
+    public static int ADMINPORT = 9443;
+    public static int GATEWAYPORT = 8243;
+    public static String USERNAME = "admin";
+    public static String PASSWORD = "admin";
     public static String APINAME;
     public static String DESCRIPTION;
     public static String CONTEXT;

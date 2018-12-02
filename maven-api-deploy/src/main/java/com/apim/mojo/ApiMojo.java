@@ -2,6 +2,7 @@ package com.apim.mojo;
 
 import java.util.List;
 
+import com.apim.service.ApiGeneration;
 import com.apim.service.PluginPropertyValues;
 import org.apache.maven.plugin.AbstractMojo;
 import org.apache.maven.plugin.MojoExecutionException;
@@ -65,8 +66,8 @@ public class ApiMojo extends AbstractMojo {
 
     public void execute() throws MojoExecutionException, MojoFailureException {
         PluginPropertyValues.HOST = getHost();
-        PluginPropertyValues.ADMIN_PORT = getAdmiport();
-        PluginPropertyValues.GATEWAY_PORT=getGwport();
+        PluginPropertyValues.ADMINPORT = getAdmiport();
+        PluginPropertyValues.GATEWAYPORT = getGwport();
         PluginPropertyValues.USERNAME = getUsername();
         PluginPropertyValues.PASSWORD = getPassword();
         PluginPropertyValues.APINAME = getApiname();
@@ -75,12 +76,18 @@ public class ApiMojo extends AbstractMojo {
         PluginPropertyValues.VERSION = getVersion();
         PluginPropertyValues.APIPATH = getApipath();
         PluginPropertyValues.TYPE = getType();
+        PluginPropertyValues.TRANSPORTS = getTransports();
         PluginPropertyValues.TIERS = getTiers();
         PluginPropertyValues.VISIBILITY = getVisibility();
         PluginPropertyValues.PRODUCTION = getProduction();
         PluginPropertyValues.SANDBOX = getSandbox();
         PluginPropertyValues.GATEWAY = getGateway();
 
+        try {
+            ApiGeneration.deploy();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
     }
 
     public String getHost() {

@@ -31,7 +31,6 @@
             <artifactId>httpclient</artifactId>
             <version>${apache.httpclient.version}</version>
         </dependency>
-		<!-- https://mvnrepository.com/artifact/org.glassfish/javax.json -->
 		<dependency>
 			<groupId>org.glassfish</groupId>
 			<artifactId>javax.json</artifactId>
@@ -49,6 +48,11 @@
 						<source>${java.version}</source>
 						<target>${java.version}</target>
 					</configuration>
+				</plugin>
+				<plugin>
+					<groupId>org.apache.maven.plugins</groupId>
+					<artifactId>maven-plugin-plugin</artifactId>
+					<version>${maven.version}</version>
 				</plugin>
 			</plugins>
 		</pluginManagement>
