@@ -11,21 +11,24 @@ import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClients;
 import org.apache.http.message.BasicNameValuePair;
 import org.apache.http.util.EntityUtils;
+import org.yaml.snakeyaml.Yaml;
 
 import javax.json.*;
 import java.io.BufferedReader;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.StringReader;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.StandardCopyOption;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
+import java.util.UUID;
 import java.util.stream.Collectors;
 
 public class ApiGeneration {
 
-    public static void main(String[] args) throws Exception {
-        uploadApi("", null);
-    }
 
     public static void deploy(ClassLoader loader) throws Exception {
         JsonObject clientCredentials = registerUser();
@@ -143,13 +146,17 @@ public class ApiGeneration {
                 tiersArray.add(t);
             });
 
+            // Swagger.json
+            String apiDefinition = apiDefinition(loader);
+
+            // Request.
             String request = Json.createObjectBuilder()
                     .add("name", PluginPropertyValues.APINAME)
                     .add("description", PluginPropertyValues.DESCRIPTION)
                     .add("context", PluginPropertyValues.CONTEXT)
                     .add("version", PluginPropertyValues.VERSION)
                     .add("provider", PluginPropertyValues.USERNAME)
-                    .add("apiDefinition", apiDefinition(loader))
+                    .add("apiDefinition", apiDefinition)
                     .add("status", "CREATED")
                     .add("responseCaching", "Disabled")
                     .add("isDefaultVersion", false)
@@ -194,15 +201,27 @@ public class ApiGeneration {
         BufferedReader bufferedReader = null;
         try {
             InputStream inputStream = loader.getResourceAsStream(PluginPropertyValues.APIPATH);
-            bufferedReader = new BufferedReader(new InputStreamReader(inputStream));
-            String lines = bufferedReader.lines().collect(Collectors.joining());
-
-            return lines;
+            Path tempFile = Files.createTempDirectory("").resolve(UUID.randomUUID().toString() + ".tmp");
+            Files.copy(inputStream, tempFile, StandardCopyOption.REPLACE_EXISTING);
+            String result = new String(Files.readAllBytes(tempFile));
+            return convertYamlToJson(result);
         } catch (Exception e) {
             e.printStackTrace();
-        } finally {
-            bufferedReader.close();
         }
         return null;
+    }
+
+    /**
+     * Convert yaml to json.
+     *
+     * @param yamlString
+     * @return
+     */
+    public static String convertYamlToJson(String yamlString) {
+        Yaml yaml = new Yaml();
+        Map<String, Object> map = (Map<String, Object>) yaml.load(yamlString);
+        JsonObject jsonObject = Json.createObjectBuilder(map).build();
+        String json = jsonObject.toString();
+        return json;
     }
 }
