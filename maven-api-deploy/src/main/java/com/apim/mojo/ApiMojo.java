@@ -1,15 +1,5 @@
 package com.apim.mojo;
 
-import java.io.BufferedReader;
-import java.io.File;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.net.URL;
-import java.net.URLClassLoader;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.stream.Collectors;
-
 import com.apim.service.ApiGeneration;
 import com.apim.service.PluginPropertyValues;
 import org.apache.maven.plugin.AbstractMojo;
@@ -18,70 +8,55 @@ import org.apache.maven.plugin.MojoFailureException;
 import org.apache.maven.plugins.annotations.Component;
 import org.apache.maven.plugins.annotations.Mojo;
 import org.apache.maven.plugins.annotations.Parameter;
-import org.apache.maven.plugins.annotations.ResolutionScope;
 import org.apache.maven.project.MavenProject;
+
+import java.io.File;
+import java.net.URL;
+import java.net.URLClassLoader;
+import java.util.ArrayList;
+import java.util.List;
 
 @Mojo(name = "deploy")
 public class ApiMojo extends AbstractMojo {
 
+    @Component
+    MavenProject mavenProject;
     @Parameter(required = true)
     private String host;
-
-    @Parameter(required = true)
-    private int admiport;
-
-    @Parameter(required = true)
-    private int gwport;
-
+    @Parameter(required = false,defaultValue = "0")
+    private int offset;
     @Parameter(required = true)
     private String username;
-
     @Parameter(required = true)
     private String password;
-
     @Parameter(required = true)
     private String apiname;
-
     @Parameter(required = false)
     private String description;
-
     @Parameter(required = true)
     private String context;
-
     @Parameter(required = true)
     private String version;
-
     @Parameter(required = true)
     private String apipath;
-
     @Parameter(required = true)
     private String type;
-
     @Parameter(required = true)
     private List<String> transports;
-
     @Parameter(required = true)
     private List<String> tiers;
-
     @Parameter(required = true)
     private String visibility;
-
     @Parameter(required = true)
     private String production;
-
     @Parameter(required = true)
     private String sandbox;
-
     @Parameter(required = true)
     private String gateway;
 
-    @Component
-    MavenProject mavenProject;
-
     public void execute() throws MojoExecutionException, MojoFailureException {
         PluginPropertyValues.HOST = getHost();
-        PluginPropertyValues.ADMINPORT = getAdmiport();
-        PluginPropertyValues.GATEWAYPORT = getGwport();
+        PluginPropertyValues.OFFSET = getOffset();
         PluginPropertyValues.USERNAME = getUsername();
         PluginPropertyValues.PASSWORD = getPassword();
         PluginPropertyValues.APINAME = getApiname();
@@ -135,20 +110,12 @@ public class ApiMojo extends AbstractMojo {
         this.host = host;
     }
 
-    public int getAdmiport() {
-        return admiport;
+    public int getOffset() {
+        return offset;
     }
 
-    public void setAdmiport(int admiport) {
-        this.admiport = admiport;
-    }
-
-    public int getGwport() {
-        return gwport;
-    }
-
-    public void setGwport(int gwport) {
-        this.gwport = gwport;
+    public void setOffset(int offset) {
+        this.offset = offset;
     }
 
     public String getUsername() {
@@ -261,5 +228,13 @@ public class ApiMojo extends AbstractMojo {
 
     public void setGateway(String gateway) {
         this.gateway = gateway;
+    }
+
+    public MavenProject getMavenProject() {
+        return mavenProject;
+    }
+
+    public void setMavenProject(MavenProject mavenProject) {
+        this.mavenProject = mavenProject;
     }
 }

@@ -16,7 +16,6 @@ import org.yaml.snakeyaml.Yaml;
 import javax.json.*;
 import java.io.BufferedReader;
 import java.io.InputStream;
-import java.io.InputStreamReader;
 import java.io.StringReader;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -25,7 +24,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
-import java.util.stream.Collectors;
 
 public class ApiGeneration {
 
@@ -57,8 +55,8 @@ public class ApiGeneration {
             httpPost.setEntity(new StringEntity(request));
 
             // Add headers
-            UsernamePasswordCredentials creds = new UsernamePasswordCredentials("admin", "admin");
-            httpPost.addHeader(new BasicScheme().authenticate(creds, httpPost, null));
+            UsernamePasswordCredentials credentials = new UsernamePasswordCredentials("admin", "admin");
+            httpPost.addHeader(new BasicScheme().authenticate(credentials, httpPost, null));
             httpPost.addHeader("Content-Type", "application/json");
 
             // Send request.
