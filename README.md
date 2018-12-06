@@ -46,3 +46,10 @@ Configuration is straightforward as shown below,
    </configuration>
 </plugin>
 ```
+
+# Executing The Plugin
+```
+mvn clean install com.apim:maven-api-deploy:1.0.0:deploy \
+-Djavax.net.ssl.trustStore=APIM_260_HOME/repository/resources/security/client-truststore.jks \
+-Djavax.net.ssl.trustStorePassword=wso2carbon
+```
